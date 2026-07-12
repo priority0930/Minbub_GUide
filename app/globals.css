@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: #f5f6fb;
+  color: #1a1a2e;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #0f1117;
+    color: #e6e6ef;
+  }
+}
+
+.prose-chat p {
+  margin: 0 0 0.6em 0;
+}
+
+.prose-chat p:last-child {
+  margin-bottom: 0;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(120, 120, 140, 0.35);
+  border-radius: 999px;
+}
