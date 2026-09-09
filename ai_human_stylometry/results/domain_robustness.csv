@@ -1,0 +1,7 @@
+﻿held_out_domain,train_n,test_n,accuracy_on_heldout_domain
+environment,50,10,1.0
+history,50,10,1.0
+economics,50,10,1.0
+education,50,10,1.0
+art,50,10,1.0
+society,50,10,1.0

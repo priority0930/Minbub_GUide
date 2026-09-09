@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HumanClassicSample",
+  "description": "Human classic corpus JSONL 한 줄(=한 샘플)의 스키마. docs/research_design.md §5.1 과 동일하다.",
+  "type": "object",
+  "required": [
+    "sample_id", "pair_id", "group", "label", "author", "title", "year",
+    "genre", "domain", "topic", "purpose", "audience", "style",
+    "main_message", "value_optional", "original_language",
+    "excerpt_text", "excerpt_char_count", "excerpt_word_count",
+    "content_summary", "argument_structure", "source_location", "source_url",
+    "copyright_status", "selection_reason", "verified"
+  ],
+  "properties": {
+    "sample_id": { "type": "string", "pattern": "^H[0-9]{3,4}$", "description": "예: H001" },
+    "pair_id": { "type": "string", "pattern": "^P[0-9]{3,4}$", "description": "대응하는 AI 샘플과 공유하는 pair 식별자. 예: P001" },
+    "group": { "const": "human_classic" },
+    "label": { "const": 0, "description": "분류 라벨: Human=0" },
+    "author": { "type": "string", "description": "실제 저자 이름" },
+    "title": { "type": "string", "description": "작품/글 제목" },
+    "year": { "type": "integer", "description": "최초 발표/출판 연도. 원칙적으로 2018년 이전" },
+    "genre": { "type": "string", "description": "예: essay, history, philosophy, science_essay, speech, literature, social_criticism, autobiography, explanatory, argumentative, literary_prose" },
+    "domain": { "type": "string", "description": "예: history, philosophy, science, geography, mathematics, society, politics, economics, literature, environment, technology, education, art" },
+    "topic": { "type": "string", "description": "구체적 주제 slug. 예: civilization_and_challenge, humanity_and_cosmos" },
+    "purpose": { "type": "string", "description": "예: explanation, persuasion, criticism, analysis, reflection, narration, information, problem_raising" },
+    "audience": { "type": "string", "description": "예: general_public, students, specialists, academic, unknown" },
+    "style": { "type": "string", "description": "예: objective, academic, lyrical, emotional, critical, reflective, formal, explanatory, narrative" },
+    "main_message": { "type": "string", "description": "이 글 전체를 한 문장으로 압축한 것. 분류 feature로는 사용하지 않음(정보 누수 방지)" },
+    "value_optional": { "type": "string", "description": "보조 metadata. 자유/정의/책임 등 가치 태그(주관적, 1차 분석에는 미사용)" },
+    "original_language": { "type": "string", "description": "예: en, ko, fr (번역문인 경우 원 언어)" },
+    "excerpt_text": { "type": "string", "description": "실제 원문 또는 검증된 정식 번역문. 저작권상 제공 불가 시 빈 문자열" },
+    "excerpt_char_count": { "type": "integer", "minimum": 0 },
+    "excerpt_word_count": { "type": "integer", "minimum": 0 },
+    "content_summary": { "type": "string", "description": "excerpt_text가 비어 있을 때를 위한 연구자의 내용 요약(원문 대체 아님, feature 계산에는 미사용)" },
+    "argument_structure": { "type": "string", "description": "구체적 사실→관점 전환→확장→Main Message 같은 논증 구조 메모" },
+    "source_location": { "type": "string", "description": "예: 'Chapter 18, Conclusion, paragraph 3' 등 원문 내 위치" },
+    "source_url": { "type": "string", "description": "원문에 접근 가능한 URL (Project Gutenberg 등)" },
+    "copyright_status": { "type": "string", "description": "예: public_domain, public_domain_pending_verification, copyrighted_excerpt_omitted" },
+    "selection_reason": { "type": "string", "description": "이 글을 선정한 이유, 검증 상태에 대한 메모 포함" },
+    "verified": { "type": "boolean", "description": "excerpt_text가 원문과 1자 단위로 대조 검증되었는지 여부" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,16 @@
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib
+seaborn
+statsmodels
+nltk
+shap
+tensorflow-cpu
+nbformat
+nbclient
+nbconvert
+ipykernel
+# 한국어 분석용 (별도 설치 필요, 환경에 따라 빌드 이슈가 있을 수 있음 — README 참고)
+# kiwipiepy
