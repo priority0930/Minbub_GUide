@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>빅분기 코드 퀴즈</title>
+<style>
+:root{
+  --bg:#f6f7f9; --card:#ffffff; --ink:#1b1f24; --muted:#5d6672; --line:#e3e6ea;
+  --code-bg:#f0f2f5; --code-ink:#1f2933; --accent:#2f6fde; --accent-soft:#e6eefc;
+  --ok:#1f8a4c; --ok-soft:#e3f5ea; --bad:#c23b3b; --bad-soft:#fbe7e7; --chip:#eef0f3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121417; --card:#1b1e23; --ink:#e7eaee; --muted:#9aa3ae; --line:#2c3138;
+    --code-bg:#23272e; --code-ink:#e3e7ec; --accent:#6c9cf0; --accent-soft:#1f2b41;
+    --ok:#4cc184; --ok-soft:#183325; --bad:#ec7272; --bad-soft:#3a1f1f; --chip:#262a31;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121417; --card:#1b1e23; --ink:#e7eaee; --muted:#9aa3ae; --line:#2c3138;
+  --code-bg:#23272e; --code-ink:#e3e7ec; --accent:#6c9cf0; --accent-soft:#1f2b41;
+  --ok:#4cc184; --ok-soft:#183325; --bad:#ec7272; --bad-soft:#3a1f1f; --chip:#262a31;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;line-height:1.55}
+.wrap{max-width:820px;margin:0 auto;padding:20px 16px 80px}
+h1{font-size:1.5rem;margin:8px 0 4px}
+.sub{color:var(--muted);margin:0 0 16px;font-size:.95rem}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:16px}
+.score{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:.92rem}
+.score b{font-variant-numeric:tabular-nums}
+.prog{flex:1;min-width:120px;height:8px;background:var(--chip);border-radius:99px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip,.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 11px;border-radius:99px;font-size:.85rem;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn{border-radius:8px}
+details.ref{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:18px}
+details.ref summary{cursor:pointer;font-weight:600}
+.tbl{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:8px}
+.tbl td,.tbl th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+.tbl code{white-space:nowrap}
+h2{font-size:1.1rem;margin:28px 0 10px;padding-left:10px;border-left:4px solid var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.tag{font-size:.75rem;background:var(--chip);color:var(--muted);padding:2px 8px;border-radius:99px}
+.tag.k{background:var(--accent-soft);color:var(--accent)}
+pre{margin:0 0 10px;background:var(--code-bg);color:var(--code-ink);padding:10px 12px;border-radius:8px;overflow-x:auto;font-size:.88rem;line-height:1.45}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+p code,.exp code,.tbl code{background:var(--code-bg);padding:1px 5px;border-radius:4px;font-size:.86em}
+.q{font-weight:600;margin:0 0 10px}
+.opts{display:grid;gap:6px}
+.opts.two{grid-template-columns:1fr 1fr}
+.opt{text-align:left;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 12px;border-radius:8px;cursor:pointer;font-size:.92rem;font-family:inherit}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ink)}
+.opt.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--ink)}
+.opt .n{display:inline-block;min-width:1.4em;color:var(--muted);font-weight:600}
+.exp{display:none;margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--chip);font-size:.9rem}
+.exp.show{display:block}
+.exp .r{font-weight:700;margin-right:6px}
+.exp .r.ok{color:var(--ok)} .exp .r.bad{color:var(--bad)}
+.hide{display:none}
+footer{color:var(--muted);font-size:.8rem;margin-top:30px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>빅분기 코드 한 줄 퀴즈</h1>
+  <p class="sub">업로드한 노트북 5개(작업형1, sum·len, 상관·회귀, 일원·이원 분산분석)의 코드 한 줄마다 <b>의미</b>와 <b>결과 형태(DataFrame/Series/스칼라, 몇×몇)</b>를 2지선다·4지선다로 풀어보세요. shape는 실제로 코드를 실행해서 확인한 값입니다.</p>
+
+  <div class="bar">
+    <div class="score">
+      <span>정답 <b id="sc">0</b> / 푼 문제 <b id="dn">0</b> / 전체 <b id="tt">0</b></span>
+      <span class="prog"><i id="pg"></i></span>
+      <button class="btn" id="wrongOnly">오답만 보기</button>
+      <button class="btn" id="reset">초기화</button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <details class="ref">
+    <summary>먼저 보기: 데이터 shape 요약표</summary>
+    <table class="tbl">
+      <tr><th>데이터 / 코드</th><th>형태</th><th>shape</th></tr>
+      <tr><td><code>type1_data1.csv</code> 원본</td><td>DataFrame</td><td>120×10 (id, age, city, f1, f2, f3, f4, f5, subscribed, views)</td></tr>
+      <tr><td>결측치 개수</td><td></td><td>f1: 31, f3: 29, views: 4 (나머지 0)</td></tr>
+      <tr><td><code>df.dropna()</code></td><td>DataFrame</td><td>70×10</td></tr>
+      <tr><td><code>df[df['f5']!=0]</code></td><td>DataFrame</td><td>102×10</td></tr>
+      <tr><td><code>df.drop_duplicates()</code></td><td>DataFrame</td><td>118×10</td></tr>
+      <tr><td>상관분석 키·몸무게</td><td>DataFrame</td><td>5×2</td></tr>
+      <tr><td>단순회귀 키·몸무게</td><td>DataFrame</td><td>20×2</td></tr>
+      <tr><td>다중회귀 매출액 데이터</td><td>DataFrame</td><td>20×4 (유형 포함 시 20×5)</td></tr>
+      <tr><td>일원분산 A~D 학점</td><td>DataFrame</td><td>10×4 → <code>melt()</code> 후 40×2</td></tr>
+      <tr><td><code>tomato.csv</code></td><td>DataFrame</td><td>120×3 (종자, 비료, 토마토수)</td></tr>
+      <tr><td><code>ols(...).fit()</code></td><td>결과 객체 (DataFrame 아님)</td><td>—</td></tr>
+      <tr><td><code>model.predict(...)</code></td><td>Series</td><td>(입력 행 수,)</td></tr>
+    </table>
+  </details>
+
+  <div id="list"></div>
+  <footer>정답 기록은 이 브라우저에만 저장됩니다.</footer>
+</div>
+
+<script>
+// 각 문항: s=섹션, c=코드, q=질문, o=보기(첫 번째가 정답), e=해설, k=유형, fixed=보기 순서 고정
+const Q = [
+// ───────── sum / len ─────────
+{s:"sum·len",k:"의미",c:"cond = df['Age'] > 25",q:"이 코드가 하는 일은?",o:["각 행의 Age가 25보다 큰지 True/False로 담은 Series를 만든다","Age가 25보다 큰 행만 남긴 DataFrame을 만든다","Age가 25보다 큰 행의 개수를 센다","Age 컬럼에서 25를 뺀다"],e:"비교 연산 결과는 <b>bool Series</b>(5,)입니다. 행을 걸러내려면 <code>df[cond]</code>를 한 번 더 써야 합니다."},
+{s:"sum·len",k:"형태",c:"cond = df['Age'] > 25",q:"cond의 형태와 shape은? (df는 5×3)",o:["Series, (5,)","DataFrame, (5,3)","Series, (3,)","DataFrame, (3,3)"],e:"행마다 True/False가 하나씩 나오므로 원본 행 수와 같은 (5,)입니다."},
+{s:"sum·len",k:"의미",c:"sum(cond)",q:"결과는?",o:["True의 개수 = 조건을 만족하는 행 수 (3)","전체 행 수 (5)","Age 값의 합","False의 개수 (2)"],e:"True는 1, False는 0으로 계산되므로 sum은 True의 개수입니다. 결과는 정수(스칼라)입니다."},
+{s:"sum·len",k:"O/X",fixed:1,c:"len(cond)",q:"len(cond)는 조건을 만족하는(True) 행의 개수다.",o:["X","O"],e:"len은 True/False 상관없이 <b>전체 길이</b>(5)입니다. 조건을 만족하는 개수는 <code>sum(cond)</code> 또는 <code>len(df[cond])</code>입니다."},
+{s:"sum·len",k:"형태",c:"df[cond]",q:"df[cond]의 형태와 shape은?",o:["DataFrame, 3×3","Series, (3,)","DataFrame, 5×3","Series, (5,)"],e:"True인 행 3개만 남고 컬럼(Name, Age, Score) 3개는 그대로입니다."},
+{s:"sum·len",k:"의미",c:"df[cond].count()",q:"결과로 Score가 2인 이유는?",o:["count()는 결측치(NaN)를 빼고 세기 때문에","Score가 숫자 컬럼이라서","count()는 중복을 빼고 세기 때문에","Score 값이 80 이하인 행을 빼서"],e:"<code>count()</code>는 컬럼별로 NaN이 아닌 값의 개수를 Series (3,)로 돌려줍니다. 도전핑의 Score가 NaN이라 2입니다."},
+{s:"sum·len",k:"O/X",fixed:1,c:"cond2 = df['Score'] > 80",q:"NaN > 80 은 False로 처리된다.",o:["O","X"],e:"NaN과의 비교는 항상 False입니다. 그래서 <code>sum(cond2)</code>는 3이고 <code>len(cond2)</code>는 5입니다."},
+
+// ───────── 작업형1 ─────────
+{s:"작업형1",k:"형태",c:"df = pd.read_csv(\"type1_data1.csv\")",q:"df의 shape은?",o:["120×10","100×10","120×9","70×10"],e:"컬럼은 id, age, city, f1, f2, f3, f4, f5, subscribed, views로 10개, 행은 120개입니다."},
+{s:"작업형1",k:"형태",c:"cond = df['f5'] != 0\ndf = df[cond]",q:"필터링 후 df의 shape은?",o:["102×10","120×10","18×10","102×1"],e:"cond는 bool Series (120,)이고, df[cond]는 f5가 0이 아닌 102행만 남긴 DataFrame입니다. 컬럼 수는 변하지 않습니다."},
+{s:"작업형1",k:"형태",c:"mi = df['views'].min()",q:"mi의 형태는?",o:["스칼라(숫자 하나, float)","Series (1,)","DataFrame 1×1","리스트"],e:"min()은 값 하나만 돌려줍니다. 결측치가 있어 float입니다."},
+{s:"작업형1",k:"의미",c:"df['views'] = df['views'].fillna(mi)",q:"이 코드의 의미는?",o:["views의 결측치를 최솟값으로 채우고 그 결과로 컬럼을 덮어쓴다","views에서 최솟값을 지운다","views가 최솟값인 행을 삭제한다","결측치가 있는 행을 삭제한다"],e:"fillna는 새 Series를 돌려주므로 <b>다시 대입</b>해야 반영됩니다. <code>inplace=True</code>보다 이 방식이 권장됩니다."},
+{s:"작업형1",k:"의미",c:"print(int(df['views'].median()))",q:"int()의 역할은?",o:["소수점 아래를 버리고 정수로 바꾼다","반올림해서 정수로 바꾼다","올림해서 정수로 바꾼다","문자열로 바꾼다"],e:"int()는 소수점 아래를 <b>버립니다</b>(5924.5 → 5924). 반올림은 <code>round()</code>입니다."},
+{s:"작업형1",k:"형태",c:"df = df['subscribed'].value_counts()",q:"결과의 형태는?",o:["Series: index=날짜, 값=빈도 (많은 순으로 정렬됨)","DataFrame: 날짜와 빈도 2개 컬럼","스칼라: 가장 많은 날짜","Series: index=0,1,2…, 값=날짜"],e:"value_counts()는 Series(이 데이터에선 (96,))이고 <b>내림차순 정렬</b>되어 있습니다. 그래서 index[0]이 최빈값입니다."},
+{s:"작업형1",k:"의미",c:"int(df.index[0][-2:])",q:"df.index[0][-2:]는?",o:["가장 많이 나온 날짜 문자열의 뒤 2글자(일)","첫 번째 행의 마지막 2개 컬럼","인덱스의 뒤에서 2번째 값","앞에서 2개 행"],e:"index[0]은 '2025-02-17' 같은 <b>문자열</b>이고, [-2:]는 뒤 2글자 '17'입니다. int()로 17이 됩니다."},
+{s:"작업형1",k:"형태",c:"df = df.dropna()",q:"결측치 행 제거 후 shape은?",o:["70×10","120×10","89×10","70×7"],e:"<code>dropna()</code>는 결측치가 하나라도 있는 <b>행</b>을 지웁니다. 컬럼은 그대로입니다."},
+{s:"작업형1",k:"형태",c:"df['new'] = df['views']/df['f1']",q:"df의 shape은? (dropna 후 70×10에서)",o:["70×11","70×10","71×10","70×1"],e:"새 컬럼이 하나 추가되어 11개 컬럼이 됩니다. 계산은 같은 행끼리 나눕니다."},
+{s:"작업형1",k:"의미",c:"df = df.sort_values('new', ascending=False)",q:"ascending=False의 의미는?",o:["내림차순(큰 값이 위로)","오름차순(작은 값이 위로)","정렬 후 인덱스 초기화","결측치를 맨 위로"],e:"ascending=True(기본)가 오름차순이고, False는 내림차순입니다."},
+{s:"작업형1",k:"의미",c:"int(df.iloc[0,1])",q:"df.iloc[0,1]이 가리키는 값은?",o:["첫 번째 행, 두 번째 컬럼(age)","index 이름이 0인 행의 'f1'","첫 번째 행, 첫 번째 컬럼(id)","두 번째 행, 첫 번째 컬럼"],e:"iloc은 <b>위치</b> 기준이고 0부터 셉니다. 컬럼 1은 id 다음인 age입니다. 결과는 스칼라입니다."},
+{s:"작업형1",k:"형태",c:"views_min = df.iloc[:10]['views'].min()",q:"df.iloc[:10]['views']의 형태는?",o:["Series (10,)","DataFrame 10×10","DataFrame 10×1","스칼라"],e:"iloc[:10]은 DataFrame 10×10이고, 여기서 ['views']로 컬럼 하나를 꺼내면 Series (10,)입니다."},
+{s:"작업형1",k:"의미",c:"df.iloc[:10, -1] = views_min",q:"이 코드의 의미는?",o:["위에서 10개 행의 마지막 컬럼(views)을 views_min으로 바꾼다","마지막 10개 행을 지운다","10번째 행만 바꾼다","views 컬럼 전체를 바꾼다"],e:":10은 0~9행, -1은 마지막 컬럼입니다. 이 데이터에서는 마지막 컬럼이 views입니다."},
+{s:"작업형1",k:"의미",c:"df['new'] = df['f4'].str[2:4]",q:"str[2:4]가 꺼내는 글자는?",o:["3번째와 4번째 글자","2번째부터 4번째 글자","2번째와 3번째 글자","뒤의 4글자"],e:"0부터 세므로 인덱스 2와 3, 즉 3·4번째 글자입니다(끝 4는 포함 안 됨). 'ENFJ' → 'FJ'"},
+{s:"작업형1",k:"O/X",fixed:1,c:"df = df[cond1 & cond2]",q:"pandas에서 두 조건을 함께 쓸 때 and 대신 &를 써야 한다.",o:["O","X"],e:"Series끼리는 &(그리고), |(또는), ~(부정)를 씁니다. 조건이 식이면 <code>(df['age']>=20) & (df['age']<30)</code>처럼 괄호가 꼭 필요합니다."},
+{s:"작업형1",k:"의미",c:"result = df['f1'].var()",q:"pandas var()의 기본 계산 방식은?",o:["표본분산 (n-1로 나눔, ddof=1)","모분산 (n으로 나눔, ddof=0)","표준편차","분산의 제곱근"],e:"pandas의 var()와 std()는 ddof=1이 기본입니다. numpy의 np.var는 ddof=0이라 값이 다릅니다."},
+{s:"작업형1",k:"의미",c:"round(result, 2)",q:"결과는?",o:["소수 둘째 자리까지 반올림","소수 둘째 자리에서 버림","정수 2자리","유효숫자 2개"],e:"round(x, 2)는 소수 셋째 자리에서 반올림해 둘째 자리까지 남깁니다."},
+{s:"작업형1",k:"의미",c:"cond1 = (df['age'] >= 20) & (df['age'] < 30)",q:"이 조건이 나타내는 것은?",o:["20대 (20 이상 30 미만)","20 초과 30 이하","20세와 30세","30대"],e:">=20 이고 <30 이므로 20~29세입니다."},
+{s:"작업형1",k:"의미",c:"df['subscribed'] = pd.to_datetime(df['subscribed'])",q:"이 코드가 필요한 이유는?",o:["문자열 날짜를 날짜형으로 바꿔야 .dt.year, .dt.month를 쓸 수 있다","날짜를 문자열로 바꾸기 위해","결측치를 지우기 위해","날짜순으로 정렬하기 위해"],e:"read_csv로 읽은 날짜는 문자열입니다. datetime으로 바꾼 뒤 <code>.dt</code>로 연·월·일을 꺼냅니다."},
+{s:"작업형1",k:"형태",c:"df['year'] = df['subscribed'].dt.year",q:"df['subscribed'].dt.year의 형태는?",o:["Series (120,)","스칼라","DataFrame 120×1","Series (12,)"],e:"행마다 연도가 하나씩 나오므로 원래 행 수와 같은 Series입니다."},
+{s:"작업형1",k:"의미",c:"print(len(df))",q:"DataFrame에 len()을 쓰면?",o:["행의 개수","컬럼의 개수","전체 셀의 개수","결측치가 아닌 값의 개수"],e:"len(df) = df.shape[0] = 행 수. 컬럼 수는 df.shape[1]입니다."},
+{s:"작업형1",k:"의미",c:"df = df['f4'].value_counts()\nprint(df.index[0])",q:"출력값은?",o:["f4의 최빈값(가장 많이 나온 값)","f4의 첫 번째 행 값","f4의 종류 개수","가장 많이 나온 값의 빈도"],e:"value_counts는 많은 순 정렬이므로 index[0]이 최빈값, 값[0](<code>.iloc[0]</code>)이 그 빈도입니다. <code>df['f4'].mode()[0]</code>도 같은 결과입니다."},
+{s:"작업형1",k:"형태",c:"df = df.groupby(['city']).mean(numeric_only=True)",q:"결과의 형태와 shape은? (dropna 후 70×10에서)",o:["DataFrame 4×5 (index=도시 4곳, 숫자 컬럼 5개)","Series (4,)","DataFrame 70×5","DataFrame 4×10"],e:"그룹 키(city)가 index가 되고, 숫자 컬럼 age, f1, f2, f5, views만 평균이 계산됩니다."},
+{s:"작업형1",k:"의미",c:"df.sort_values(\"f2\", ascending=False).index[0]",q:"출력값은?",o:["f2 평균이 가장 큰 지역 이름","f2 값 중 가장 큰 숫자","첫 번째 행 번호 0","f2 컬럼 이름"],e:"groupby 후 index가 지역명이므로 index[0]은 지역 이름입니다(서울)."},
+{s:"작업형1",k:"의미",c:"end = int(len(df) * 0.7)",q:"70×10 데이터에서 end는?",o:["49","49.0","50","70"],e:"70×0.7 = 49.0이고 int()로 49입니다. 소수가 나오면 버림 처리됩니다."},
+{s:"작업형1",k:"형태",c:"df = df.iloc[:end]",q:"end=49일 때 df의 shape은?",o:["49×10","50×10","49×49","10×49"],e:"슬라이싱 [:49]는 0~48행, 총 49행이고 끝은 포함하지 않습니다."},
+{s:"작업형1",k:"의미",c:"q3 = df['views'].quantile(.75)",q:"q3의 의미와 형태는?",o:["3사분위수(75%), 스칼라","상위 75% 데이터, Series","75번째 값, 스칼라","평균의 75%, 스칼라"],e:"quantile(.25)는 1사분위수입니다. IQR은 q3 - q1입니다."},
+{s:"작업형1",k:"형태",c:"df.isnull().sum()",q:"결과의 형태는?",o:["Series (10,): 컬럼별 결측치 개수","스칼라: 전체 결측치 개수","DataFrame 120×10","Series (120,): 행별 결측치 개수"],e:"isnull()은 120×10 bool DataFrame이고, sum()은 기본으로 컬럼 방향(axis=0)으로 더합니다. 결과는 f1 31, f3 29, views 4입니다."},
+{s:"작업형1",k:"형태",c:"df = df.dropna(subset=['f1'])",q:"결과의 shape은?",o:["89×10","70×10","31×10","120×9"],e:"f1에 결측치가 있는 31행만 지웁니다. 120 - 31 = 89"},
+{s:"작업형1",k:"의미",c:"freq = df['f3'].mode()[0]",q:"[0]을 붙이는 이유는?",o:["mode()는 Series를 돌려주므로 첫 번째 값을 꺼내야 한다","첫 번째 행만 쓰기 위해","결측치를 빼기 위해","가장 적은 값을 고르기 위해"],e:"최빈값이 여러 개일 수 있어 mode()는 Series를 돌려줍니다(여기선 (1,)). [0]으로 값(문자열)만 꺼냅니다."},
+{s:"작업형1",k:"의미",c:"print(sum(df['f3'] == 'gold'))",q:"출력값은?",o:["f3이 gold인 행의 개수","gold 행의 f3 합계","gold의 위치(index)","True/False Series"],e:"bool Series를 sum하면 True의 개수입니다. <code>len(df[df['f3']=='gold'])</code>와 같습니다."},
+{s:"작업형1",k:"형태",c:"cond = df['f1'].isnull()\ndf = df[cond]",q:"df의 shape은?",o:["31×10","89×10","31×1","120×10"],e:"f1이 결측인 31행만 선택됩니다."},
+{s:"작업형1",k:"의미",c:"df = df.drop_duplicates()",q:"중복이 있을 때 기본으로 지워지는 행은?",o:["뒤에 나온 행 (keep='first')","앞에 나온 행","중복된 행 전부","아무것도 안 지움"],e:"기본값 keep='first'로 처음 나온 행을 남기고 뒤의 중복을 지웁니다. 120×10 → 118×10"},
+{s:"작업형1",k:"의미",c:"df['f3'] = df['f3'].map({'silver':1,'gold':2,'vip':3}).fillna(0)",q:"결측치가 0이 되는 원리는?",o:["딕셔너리에 없는 값(NaN 포함)은 map 후 NaN이 되고, fillna(0)이 0으로 채운다","map이 NaN을 자동으로 0으로 바꾼다","fillna가 map보다 먼저 실행된다","silver보다 작은 값이라서"],e:"map은 딕셔너리에 없는 값을 모두 NaN으로 만듭니다. 그래서 fillna(0)를 <b>map 뒤에</b> 붙입니다. 순서를 바꾸면 0이 다시 NaN이 됩니다."},
+{s:"작업형1",k:"형태",c:"cols = df.select_dtypes(exclude='object').columns",q:"cols의 형태는?",o:["Index: 숫자형 컬럼 이름 5개","DataFrame 120×5","리스트 10개","Series (5,)"],e:"<code>.columns</code>는 컬럼 이름 모음(Index)입니다: age, f1, f2, f5, views. df[cols]로 하면 120×5 DataFrame이 됩니다."},
+{s:"작업형1",k:"형태",c:"df = df.T",q:"120×5 DataFrame에 .T를 하면?",o:["5×120","120×5","1×600","5×5"],e:".T는 행과 열을 바꾸는 전치(transpose)입니다."},
+{s:"작업형1",k:"의미",c:"df = df.T\nprint(sum(df.sum() > 3000))",q:"df.T.sum()과 같은 결과를 내는 코드는?",o:["원래 df의 df.sum(axis=1)","원래 df의 df.sum()","원래 df의 df.sum().sum()","원래 df의 len(df)"],e:"전치 후 컬럼 방향으로 더하는 것은 원래 데이터의 <b>행별 합</b>과 같습니다. 결과는 Series (120,)입니다."},
+
+// ───────── 상관관계 ─────────
+{s:"상관관계",k:"형태",c:"df.corr()",q:"키·몸무게 df(5×2)에 corr()을 하면?",o:["DataFrame 2×2 상관계수 행렬","스칼라 상관계수 하나","Series (2,)","DataFrame 5×2"],e:"모든 컬럼 쌍의 상관계수 행렬입니다. 대각선은 자기 자신과의 상관이라 1입니다."},
+{s:"상관관계",k:"형태",c:"df['키'].corr(df['몸무게'])",q:"결과의 형태는?",o:["스칼라 (0.901)","DataFrame 2×2","Series (5,)","튜플"],e:"Series끼리 corr하면 숫자 하나입니다. 순서를 바꿔도 값은 같습니다."},
+{s:"상관관계",k:"의미",c:"df.corr(method='spearman')",q:"스피어맨 상관계수의 특징은?",o:["값 대신 순위로 계산한다 (비모수)","기본(피어슨)과 같은 계산이다","범주형 데이터 전용이다","p-value만 계산한다"],e:"method 기본값은 'pearson'입니다. 'spearman', 'kendall'은 순위 기반입니다."},
+{s:"상관관계",k:"의미",c:"stats.pearsonr(df['몸무게'], df['키'])",q:"df.corr()과 다른 점은?",o:["상관계수와 함께 p-value(검정 결과)도 준다","상관계수 행렬을 준다","순위 상관만 계산한다","DataFrame을 돌려준다"],e:"결과 객체에 statistic(상관계수)과 pvalue가 들어 있습니다. <code>r, p = stats.pearsonr(x, y)</code>로 나눠 받을 수 있습니다."},
+{s:"상관관계",k:"O/X",fixed:1,c:"stats.kendalltau(df['몸무게'], df['키'])\n# statistic=0.8, pvalue=0.083",q:"유의수준 0.05에서 켄달타우 상관관계는 유의하다.",o:["X","O"],e:"p = 0.083 > 0.05이므로 귀무가설(상관없음)을 기각하지 못합니다. 피어슨(p=0.037)과 스피어맨(p=0.037)은 유의합니다."},
+
+// ───────── 단순 선형 회귀 ─────────
+{s:"단순회귀",k:"의미",c:"model = ols('키 ~ 몸무게', data=df).fit()",q:"formula '키 ~ 몸무게'의 의미는?",o:["키 = 종속변수(y), 몸무게 = 독립변수(x)","몸무게 = 종속변수, 키 = 독립변수","키와 몸무게의 상관계수","키에서 몸무게를 뺀다"],e:"'종속 ~ 독립1 + 독립2' 형식입니다. ~ 왼쪽이 예측할 대상(y)입니다."},
+{s:"단순회귀",k:"형태",c:"model = ols('키 ~ 몸무게', data=df).fit()",q:"model(fit 결과)의 형태는?",o:["회귀 결과 객체 (DataFrame 아님)","DataFrame 20×2","Series (2,)","예측값 Series (20,)"],e:"fit()은 RegressionResults 객체를 돌려줍니다. 여기서 .params, .rsquared, .pvalues, .predict() 등을 꺼내 씁니다."},
+{s:"단순회귀",k:"형태",c:"model.rsquared",q:"결과의 형태는?",o:["스칼라 (0.2795)","Series (2,)","DataFrame 1×1","튜플"],e:"결정계수 R²는 숫자 하나입니다. 다중회귀에서 변수 수를 고려하려면 rsquared_adj를 씁니다."},
+{s:"단순회귀",k:"형태",c:"model.params",q:"model.params의 형태는?",o:["Series (2,): index = Intercept, 몸무게","DataFrame 2×2","스칼라","리스트 [절편, 기울기]"],e:"그래서 <code>model.params['몸무게']</code>로 기울기, <code>model.params['Intercept']</code>로 절편을 꺼냅니다."},
+{s:"단순회귀",k:"의미",c:"model.params['몸무게']   # 0.4938",q:"0.4938의 의미는?",o:["몸무게가 1 늘면 키가 평균 0.4938 늘어난다","몸무게가 0일 때 키","키와 몸무게의 상관계수","설명력이 49%"],e:"기울기(회귀계수)입니다. 절편 135.82는 몸무게가 0일 때의 예측 키입니다."},
+{s:"단순회귀",k:"의미",c:"model.pvalues['몸무게']  # 0.0165",q:"유의수준 0.05에서 해석은?",o:["p < 0.05이므로 몸무게의 회귀계수는 유의하다","p < 0.05이므로 유의하지 않다","모델의 설명력이 1.65%다","몸무게가 키에 영향이 없다"],e:"귀무가설은 '회귀계수 = 0'입니다. p가 0.05보다 작아 기각되므로 몸무게는 유의한 변수입니다."},
+{s:"단순회귀",k:"형태",c:"newdata = pd.DataFrame({'몸무게':[50]})",q:"newdata의 shape은?",o:["DataFrame 1×1","Series (1,)","스칼라 50","DataFrame 1×2"],e:"행 1개, 컬럼 1개입니다. 컬럼명은 학습 때 쓴 독립변수 이름('몸무게')과 같아야 합니다."},
+{s:"단순회귀",k:"형태",c:"model.predict(newdata)",q:"예측 결과의 형태는?",o:["Series (1,) — 값 160.51","스칼라 160.51","DataFrame 1×1","DataFrame 1×6"],e:"predict는 입력 행 수만큼의 Series를 돌려줍니다. 숫자만 쓰려면 <code>model.predict(newdata)[0]</code>을 씁니다."},
+{s:"단순회귀",k:"의미",c:"df['잔차'] = df['키'] - model.predict(df['몸무게'])",q:"잔차의 정의는?",o:["실제값 - 예측값","예측값 - 실제값","실제값 - 평균","예측값의 제곱"],e:"결과는 Series (20,)입니다. <code>model.resid</code>와 같은 값입니다."},
+{s:"단순회귀",k:"의미",c:"sum(df['잔차'] ** 2)",q:"이 값의 이름은?",o:["잔차 제곱합 (SSE/RSS)","평균제곱오차 (MSE)","결정계수","표준오차"],e:"잔차를 제곱해서 모두 더한 값(755.90)입니다. 행 수로 나누면 MSE입니다."},
+{s:"단순회귀",k:"의미",c:"(df['잔차'] ** 2).mean()",q:"이 값의 이름은?",o:["MSE (평균제곱오차)","SSE (잔차 제곱합)","RMSE","MAE"],e:"잔차 제곱의 평균입니다(37.80). sklearn의 <code>mean_squared_error(y, pred)</code>와 같습니다. RMSE는 여기에 루트를 씌운 값입니다."},
+{s:"단순회귀",k:"형태",c:"model.resid",q:"model.resid의 형태는?",o:["Series (20,)","스칼라","DataFrame 20×2","Series (2,)"],e:"관측치(행)마다 잔차가 하나씩 있습니다."},
+{s:"단순회귀",k:"형태",c:"pred = model.get_prediction(newdata)\npred.summary_frame(alpha=0.05)",q:"summary_frame의 shape은?",o:["DataFrame 1×6","DataFrame 1×2","Series (6,)","DataFrame 2×6"],e:"컬럼은 mean, mean_se, mean_ci_lower, mean_ci_upper, obs_ci_lower, obs_ci_upper입니다. 행 수는 newdata 행 수(1)와 같습니다."},
+{s:"단순회귀",k:"의미",c:"pred.summary_frame(alpha=0.05)",q:"'예측구간'에 해당하는 컬럼은?",o:["obs_ci_lower, obs_ci_upper","mean_ci_lower, mean_ci_upper","mean, mean_se","conf_int"],e:"mean_ci는 <b>신뢰구간</b>(평균 예측), obs_ci는 <b>예측구간</b>(개별 관측)입니다. 예측구간이 항상 더 넓습니다."},
+
+// ───────── 다중 선형 회귀 ─────────
+{s:"다중회귀",k:"형태",c:"model = ols('매출액 ~ 광고비 + 플랫폼', data=df).fit()\nmodel.params",q:"params의 shape은?",o:["Series (3,): Intercept, 광고비, 플랫폼","Series (2,)","DataFrame 3×2","Series (4,)"],e:"절편 1개 + 독립변수 2개 = 3개입니다. '투자'는 formula에 없어서 쓰이지 않습니다."},
+{s:"다중회귀",k:"형태",c:"model.conf_int(alpha=0.05)",q:"결과의 형태는?",o:["DataFrame 3×2 (행=변수, 열=하한 0/상한 1)","Series (3,)","DataFrame 2×3","튜플 (하한, 상한)"],e:"회귀계수별 95% 신뢰구간입니다. 광고비는 0.117~3.522입니다."},
+{s:"다중회귀",k:"의미",c:"newdata = pd.DataFrame({'광고비':[50], '플랫폼':[20]})\nmodel.predict(newdata)",q:"예측값(310.57)의 계산 방법은?",o:["101.02 + 1.8194×50 + 5.9288×20","1.8194×50 + 5.9288×20","101.02 × 50 × 20","(50+20) × 1.8194"],e:"절편 + 계수×값을 모두 더합니다. newdata는 1×2 DataFrame이고 결과는 Series (1,)입니다."},
+{s:"다중회귀",k:"O/X",fixed:1,c:"model.pvalues['광고비']   # 0.0376",q:"유의수준 0.05에서 광고비의 회귀계수는 유의하다.",o:["O","X"],e:"0.0376 < 0.05이므로 유의합니다. 반면 절편의 p값 0.177은 유의하지 않습니다."},
+{s:"다중회귀",k:"형태",c:"df2 = pd.get_dummies(df)",q:"유형(A/B/C)이 있는 20×5 df에 적용하면 shape은?",o:["20×7","20×5","20×8","20×6"],e:"문자형 '유형' 컬럼 1개가 유형_A, 유형_B, 유형_C 3개로 바뀝니다: 5 - 1 + 3 = 7"},
+{s:"다중회귀",k:"형태",c:"df = pd.get_dummies(df, drop_first=True)",q:"shape과 남는 더미 컬럼은?",o:["20×6, 유형_B·유형_C","20×7, 유형_A·유형_B·유형_C","20×6, 유형_A·유형_B","20×5, 유형_C"],e:"drop_first=True는 첫 번째 범주(A)를 빼서 다중공선성을 막습니다. A가 기준(base)이 됩니다."},
+{s:"다중회귀",k:"의미",c:"model = ols('매출액 ~ 광고비 + 유형', data=df).fit()",q:"문자형 '유형'을 formula에 그대로 넣으면?",o:["자동으로 더미 변수(유형[T.B], 유형[T.C])로 바꿔서 학습한다","에러가 난다","유형을 무시한다","A=1, B=2, C=3 숫자로 바꾼다"],e:"statsmodels formula는 문자형을 자동으로 범주형으로 처리하고, 첫 범주 A를 기준으로 합니다. get_dummies(drop_first=True)와 결과가 같습니다."},
+{s:"다중회귀",k:"의미",c:"유형_B   coef -160.2695",q:"이 계수의 의미는?",o:["광고비가 같을 때 유형 B는 유형 A보다 매출액이 평균 160.27 낮다","유형 B의 평균 매출액이 -160","유형 B가 1 늘면 매출액이 160 감소한다","B와 C의 차이가 160"],e:"더미 변수 계수는 <b>기준 범주(A)와의 차이</b>입니다."},
+
+// ───────── 일원 분산 분석 ─────────
+{s:"일원분산",k:"의미",c:"stats.f_oneway(df['A'], df['B'], df['C'], df['D'])",q:"이 검정의 귀무가설은?",o:["네 그룹의 평균이 모두 같다","네 그룹의 분산이 모두 같다","데이터가 정규분포를 따른다","적어도 두 그룹의 평균이 다르다"],e:"p = 0.0006 < 0.05이므로 귀무가설을 기각합니다. 적어도 한 쌍의 평균이 다릅니다."},
+{s:"일원분산",k:"의미",c:"stats.shapiro(df['A'])",q:"이 검정의 목적은?",o:["정규성 검정 (p > 0.05면 정규성 만족)","등분산 검정","평균 차이 검정","독립성 검정"],e:"Shapiro-Wilk 검정의 귀무가설은 '정규분포를 따른다'입니다. p가 크면 정규성을 만족한다고 봅니다."},
+{s:"일원분산",k:"의미",c:"stats.levene(df['A'], df['B'], df['C'], df['D'])",q:"이 검정의 목적은?",o:["등분산 검정 (p > 0.05면 등분산 만족)","정규성 검정","평균 차이 검정","사후 검정"],e:"p = 0.22 > 0.05이므로 분산이 같다고 봅니다."},
+{s:"일원분산",k:"형태",c:"df_melt = df.melt()",q:"10×4 df에 melt()를 하면?",o:["DataFrame 40×2 (variable, value)","DataFrame 4×10","DataFrame 10×2","Series (40,)"],e:"넓은 형태를 긴 형태로 바꿉니다. 원래 컬럼명이 variable 컬럼에, 값은 value 컬럼에 들어갑니다. ols와 tukey에 쓰려면 이 형태가 필요합니다."},
+{s:"일원분산",k:"형태",c:"model = ols('value ~ variable', data=df_melt).fit()\nanova_lm(model)",q:"anova_lm 결과의 shape은?",o:["DataFrame 2×5 (행: variable, Residual)","DataFrame 4×5","Series (5,)","DataFrame 40×2"],e:"컬럼은 df, sum_sq, mean_sq, F, PR(>F)입니다. F와 p값은 f_oneway 결과와 같습니다."},
+{s:"일원분산",k:"의미",c:"pairwise_tukeyhsd(df_melt['value'], df_melt['variable'], alpha=0.05)",q:"사후검정을 하는 이유는?",o:["어떤 그룹 쌍 사이에 차이가 있는지 알아보기 위해","정규성을 확인하기 위해","ANOVA가 유의하지 않을 때 다시 검정하려고","등분산을 확인하기 위해"],e:"ANOVA는 '어딘가 다르다'까지만 알려줍니다. Tukey 결과에서 reject=True인 쌍(A-B, B-D)이 유의하게 다릅니다."},
+{s:"일원분산",k:"O/X",fixed:1,c:"tukeyhsd 결과: A  B  meandiff 0.41  p-adj 0.0397  reject True",q:"A와 B의 평균 차이는 유의수준 0.05에서 유의하다.",o:["O","X"],e:"p-adj 0.0397 < 0.05이고 reject=True이므로 유의합니다."},
+{s:"일원분산",k:"형태",c:"bon_result = mc.allpairtest(stats.ttest_ind, method='bonf')\nprint(bon_result[0])",q:"[0]을 붙이는 이유는?",o:["allpairtest는 튜플을 돌려주고, [0]이 결과 요약표다","첫 번째 그룹만 보기 위해","p값만 꺼내기 위해","DataFrame의 첫 행"],e:"allpairtest는 (요약표, 상세결과, 컬럼정보) 3개짜리 튜플을 돌려줍니다."},
+{s:"일원분산",k:"의미",c:"stats.kruskal(df['A'], df['B'], df['C'], df['D'])",q:"이 검정을 쓰는 상황은?",o:["정규성을 만족하지 않을 때 쓰는 비모수 검정","등분산만 만족할 때","표본이 많을 때","두 그룹만 비교할 때"],e:"D 그룹의 shapiro p값이 0.00003으로 정규성을 만족하지 않아 Kruskal-Wallis를 씁니다."},
+
+// ───────── 이원 분산 분석 ─────────
+{s:"이원분산",k:"형태",c:"df = pd.read_csv(\"tomato.csv\")",q:"tomato 데이터의 shape은?",o:["120×3","120×4","12×10","40×3"],e:"종자 4개 × 비료 3개 × 반복 10 = 120행이고, 컬럼은 종자, 비료, 토마토수 3개입니다."},
+{s:"이원분산",k:"의미",c:"ols('토마토수 ~ C(종자) + C(비료) + C(종자):C(비료)', data=df)",q:"C(비료)로 감싸는 이유는?",o:["비료(11,12,13)가 숫자라서 범주형으로 처리하라고 지정하려고","비료를 정규화하려고","결측치를 지우려고","비료를 문자열로 바꿔 저장하려고"],e:"C() 없이 쓰면 비료가 연속형 숫자로 처리되어 df=1이 됩니다. C(비료)로 쓰면 3개 범주라서 df=2가 맞게 나옵니다."},
+{s:"이원분산",k:"의미",c:"C(종자):C(비료)",q:"':' 기호의 의미는?",o:["두 요인의 상호작용 효과","두 요인의 나눗셈","두 요인의 주효과만","슬라이싱"],e:"<code>A * B</code> = <code>A + B + A:B</code>입니다. 그래서 두 formula의 결과가 같습니다."},
+{s:"이원분산",k:"형태",c:"anova_lm(model)",q:"이원분산 결과표의 shape은?",o:["DataFrame 4×5 (종자, 비료, 상호작용, Residual)","DataFrame 3×5","DataFrame 2×5","DataFrame 120×3"],e:"요인 2개 + 상호작용 1개 + 잔차 1개로 4행입니다."},
+{s:"이원분산",k:"O/X",fixed:1,c:"C(종자):C(비료)   PR(>F) = 0.2147",q:"종자와 비료 사이의 상호작용 효과는 유의하다.",o:["X","O"],e:"0.2147 > 0.05이므로 귀무가설(상호작용 없음)을 기각하지 못합니다. 주효과인 종자(7e-10)와 비료(0.0018)는 유의합니다."},
+{s:"이원분산",k:"의미",c:"print(format(7.254117e-10, '.10f'))",q:"이 코드의 목적은?",o:["지수 표기(e-10)를 소수점 10자리 일반 표기로 바꿔 보기","반올림해서 0으로 만들기","p값을 10배 하기","정수로 바꾸기"],e:"7.25e-10 = 0.000000000725입니다. 결과는 문자열 '0.0000000007'입니다."},
+{s:"이원분산",k:"형태",c:"df[cond_tree_A & cond_fert_1]['토마토수']",q:"결과의 형태는?",o:["Series (10,)","DataFrame 10×3","Series (120,)","DataFrame 40×3"],e:"종자 A이면서 비료 11인 행은 10개이고, ['토마토수']로 컬럼 하나를 꺼내므로 Series입니다. 각 조합마다 shapiro로 정규성을 확인합니다."},
+{s:"이원분산",k:"의미",c:"pairwise_tukeyhsd(df['토마토수'], df['비료'].astype(str))",q:".astype(str)에 대한 설명으로 맞는 것은?",o:["비료를 문자로 바꾸지만, 그룹 구분용이라 생략해도 결과는 같다","없으면 에러가 난다","비료를 숫자로 바꾼다","결과가 달라진다"],e:"Tukey는 그룹 라벨로만 쓰기 때문에 숫자든 문자든 결과가 같습니다(노트북 주석 참고)."}
+];
+
+const SECS = ["전체", ...[...new Set(Q.map(x=>x.s))]];
+const KEY = "bigdata-quiz-v1";
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e) { state = {}; }
+let curSec = "전체", wrongOnly = false;
+
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+// 문항별로 고정된 시드로 보기 섞기(새로고침해도 순서 동일)
+function shuffled(arr, seed){
+  const a = arr.map((v,i)=>({v,i})); let s = seed*9301+49297;
+  for (let i=a.length-1;i>0;i--){ s=(s*9301+49297)%233280; const j=Math.floor(s/233280*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+function render(){
+  const list = document.getElementById("list"); list.innerHTML = "";
+  let lastSec = null;
+  Q.forEach((it, idx) => {
+    if (curSec !== "전체" && it.s !== curSec) return;
+    const st = state[idx];
+    if (wrongOnly && !(st !== undefined && st.c === false)) return;
+    if (it.s !== lastSec){ const h = document.createElement("h2"); h.textContent = it.s; list.appendChild(h); lastSec = it.s; }
+    const opts = it.fixed ? it.o.map((v,i)=>({v,i})) : shuffled(it.o, idx+7);
+    const two = it.o.length === 2;
+    const card = document.createElement("div"); card.className = "card";
+    card.innerHTML =
+      `<div class="meta"><span class="tag">Q${idx+1}</span><span class="tag k">${it.k}</span><span class="tag">${two?"2지선다":"4지선다"}</span></div>
+       <pre><code>${esc(it.c)}</code></pre>
+       <p class="q">${it.q}</p>
+       <div class="opts ${two?"two":""}"></div>
+       <div class="exp"></div>`;
+    const box = card.querySelector(".opts"), exp = card.querySelector(".exp");
+    opts.forEach((op, k) => {
+      const b = document.createElement("button"); b.className = "opt";
+      b.innerHTML = `<span class="n">${two?"":(k+1)+"."}</span> ${op.v}`;
+      b.onclick = () => { state[idx] = {p:op.i, c:op.i===0}; save(); show(); updateScore(); };
+      box.appendChild(b);
+    });
+    function show(){
+      const s = state[idx]; if (!s) return;
+      [...box.children].forEach((b,k)=>{ b.disabled = true; if (opts[k].i===0) b.classList.add("ok"); else if (opts[k].i===s.p) b.classList.add("bad"); });
+      exp.innerHTML = `<span class="r ${s.c?"ok":"bad"}">${s.c?"정답!":"오답"}</span>${it.e}`;
+      exp.classList.add("show");
+    }
+    show();
+    list.appendChild(card);
+  });
+  if (!list.children.length) list.innerHTML = '<p class="sub">표시할 문제가 없습니다.</p>';
+}
+function updateScore(){
+  const done = Object.keys(state).length, ok = Object.values(state).filter(s=>s.c).length;
+  document.getElementById("sc").textContent = ok;
+  document.getElementById("dn").textContent = done;
+  document.getElementById("tt").textContent = Q.length;
+  document.getElementById("pg").style.width = (done/Q.length*100)+"%";
+}
+const chips = document.getElementById("chips");
+SECS.forEach(s => {
+  const b = document.createElement("button"); b.className = "chip"+(s===curSec?" on":""); b.textContent = s;
+  b.onclick = () => { curSec = s; [...chips.children].forEach(c=>c.classList.toggle("on", c===b)); render(); };
+  chips.appendChild(b);
+});
+document.getElementById("wrongOnly").onclick = e => { wrongOnly = !wrongOnly; e.target.textContent = wrongOnly ? "전체 보기" : "오답만 보기"; render(); };
+document.getElementById("reset").onclick = () => { if (confirm("기록을 초기화할까요?")) { state = {}; save(); render(); updateScore(); } };
+render(); updateScore();
+</script>
+</body>
+</html>
