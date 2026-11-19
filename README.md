@@ -31,3 +31,5 @@
 
 이 저장소에는 별개의 학술 연구 프로젝트도 함께 들어 있습니다: [`ai_human_stylometry/`](ai_human_stylometry/README.md)
 — AI 생성 글과 인간 작성 글의 문체적 차이를 통계·PCA·머신러닝·ANN으로 분석하는 연구입니다.
+
+[`bigdata_type3/`](bigdata_type3/README.md) — 빅데이터분석기사 실기 작업형 3유형(통계 분석) 10일 대비 학습 앱입니다.
