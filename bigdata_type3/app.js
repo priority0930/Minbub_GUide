@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   const TPL = window.TEMPLATES;
+  const VIEWS = ['home', 'study', 'quiz', 'plan', 'mock', 'wrong', 'project'];
   const PROBS = window.PROBLEMS;
   const TMAP = Object.fromEntries(TPL.map(t => [t.id, t]));
   const PMAP = Object.fromEntries(PROBS.map(p => [p.id, p]));
@@ -19,8 +20,8 @@
     return {
       examDate: iso(today0().getTime() + 10 * DAY),
       subs: {}, funcs: {}, codes: {}, blanks: {}, quizB: {}, quizD: {}, wrong: {},
-      stats: { tries: 0, correct: 0 }, mocks: [], mock: null, dayDone: {}, drafts: {},
-      ui: { view: 'home', tpl: 'T01', mode: 'E', pi: 0, bIdx: 0, cardRev: false, retry: null },
+      stats: { tries: 0, correct: 0 }, mocks: [], mock: null, dayDone: {}, drafts: {}, quizQ: {}, qs: null,
+      ui: { view: 'home', tpl: 'T01', mode: 'E', pi: 0, bIdx: 0, cardRev: false, retry: null, qz: { fmt: 'mix', scope: 'all', n: 10 } },
     };
   }
   let S;
@@ -131,7 +132,7 @@
     const dl = daysLeft(); const pl = window.PLAN[dayNum() - 1]; const dp = dayProgress(pl);
     const acc = S.stats.tries ? pct(S.stats.correct, S.stats.tries) + '%' : '-';
     const est = estScore(); const bm = bestMock();
-    const nav = [['home', '홈'], ['study', '학습'], ['mock', '모의고사'], ['wrong', '오답노트'], ['plan', '10일 계획'], ['project', '10점 프로젝트']];
+    const nav = [['home', '홈'], ['study', '학습'], ['quiz', '객관식 퀴즈'], ['mock', '모의고사'], ['wrong', '오답노트'], ['plan', '10일 계획'], ['project', '10점 프로젝트']];
     $('#top').innerHTML = `
       <button class="brand" data-act="go" data-v="home" aria-label="홈으로"><b>빅분기 TYPE 3</b><span>10일 완성</span></button>
       <nav class="nav">${nav.map(([v, l]) => `<button data-act="go" data-v="${v}" class="${S.ui.view === v ? 'on' : ''}">${l}${v === 'wrong' && openWrong().length ? ' <span class="chip bad">' + openWrong().length + '</span>' : ''}</button>`).join('')}</nav>
@@ -149,7 +150,7 @@
   function render() {
     renderTop();
     const v = S.ui.view;
-    const fn = { home: vHome, study: vStudy, plan: vPlan, mock: vMock, wrong: vWrong, project: vProject }[v] || vHome;
+    const fn = { home: vHome, study: vStudy, plan: vPlan, mock: vMock, wrong: vWrong, project: vProject, quiz: vQuiz }[v] || vHome;
     $('#view').innerHTML = fn();
     afterRender();
     save();
@@ -191,7 +192,7 @@
     </section>
     <div class="section-h"><h2>10일 학습 계획</h2><button class="btn sm" data-act="go" data-v="plan">전체 보기</button></div>
     ${daysGrid()}
-    <div class="section-h"><h2>14개 템플릿</h2><span class="muted small">눌러서 바로 학습</span></div>
+    <div class="section-h"><h2>14개 템플릿</h2><span class="row"><button class="btn sm pri" data-act="go" data-v="quiz">이지선다·사지선다 퀴즈 ${window.QUIZ2.length + window.QUIZ4.length}문항</button><span class="muted small">눌러서 바로 학습</span></span></div>
     <div class="path">${TPL.map(t => { const m = tplMastery(t.id); return `
       <button class="panel pnode" data-act="tpl" data-v="${t.id}" style="text-align:left">
         <span class="ord">${t.id} · Day ${t.day} ${t.core ? '<span class="chip acc">핵심</span>' : ''}</span>
@@ -272,7 +273,7 @@
   // ---------- study
   function vStudy() {
     const t = TMAP[S.ui.tpl] || TPL[0]; const mode = S.ui.mode;
-    const modes = [['A', '개념'], ['B', '방법 선택'], ['C', '코드 빈칸'], ['D', '해석 퀴즈'], ['E', '실전 문제'], ['F', '모의고사'], ['G', '오답 재학습']];
+    const modes = [['A', '개념'], ['B', '방법 선택'], ['C', '코드 빈칸'], ['D', '해석 퀴즈'], ['Q', '2지·4지 퀴즈'], ['E', '실전 문제'], ['F', '모의고사'], ['G', '오답 재학습']];
     let center = '', right = '';
     if (mode === 'A') [center, right] = modeA(t);
     else if (mode === 'B') [center, right] = modeB(t);
@@ -537,6 +538,7 @@
     const [type, id] = [k[0], k.slice(2)];
     if (type === 'S' && SUBMAP[id]) { const { sub, prob, no } = SUBMAP[id]; return { title: `${prob.id} ${prob.title} · 소문항 ${no}`, desc: sub.q, act: `data-act="openSub" data-v="${id}"` }; }
     if (type === 'C' && TMAP[id]) return { title: `${id} ${TMAP[id].name} · 코드 빈칸`, desc: '빈칸 암기에서 틀린 칸이 있었습니다.', act: `data-act="tplmode" data-v="${id}" data-m="C"` };
+    if (type === 'Q') { const it = qItem(id); return it ? { title: (it.fmt === 2 ? '이지선다' : '사지선다') + ' 퀴즈 · ' + (it.tpl === 'ALL' ? '공통' : it.tpl), desc: it.q, act: `data-act="qRetryOne" data-v="${id}"` } : null; }
     if (type === 'B') { const q = window.METHOD_QUIZ[+id]; return q ? { title: '방법 선택 퀴즈', desc: q[0], act: `data-act="openB" data-v="${id}"` } : null; }
     if (type === 'D') { const q = window.INTERP_QUIZ[+id]; return q ? { title: '해석 퀴즈 · ' + (q[0] === 'ALL' ? '공통' : q[0]), desc: q[2], act: `data-act="openD" data-v="${id}"` } : null; }
     return null;
@@ -612,6 +614,80 @@
   function gradeValue(s, raw) {
     if (s.kind === 'num') { const x = parseNum(raw); return !isNaN(x) && Math.abs(x - s.ans) <= tolOf(s); }
     return raw === s.ans;
+  }
+
+  // ---------- 이지선다 / 사지선다 퀴즈
+  function qItem(id) {
+    const fmt = +id[0]; const raw = (fmt === 2 ? window.QUIZ2 : window.QUIZ4)[+id.slice(2)]; if (!raw) return null;
+    return { id, fmt, tpl: raw[0], q: raw[1], opts: raw[2] || ['O', 'X'], ox: !raw[2], ans: raw[3], exp: raw[4] };
+  }
+  const QIDS = window.QUIZ2.map((_, i) => '2-' + i).concat(window.QUIZ4.map((_, i) => '4-' + i));
+  function qPool() {
+    const z = S.ui.qz;
+    let ids = QIDS.filter(id => z.fmt === 'mix' || id[0] === z.fmt);
+    if (z.scope === 'wrong') ids = ids.filter(id => S.wrong['Q:' + id] && !S.wrong['Q:' + id].resolved);
+    else if (z.scope !== 'all') ids = ids.filter(id => qItem(id).tpl === z.scope);
+    return ids;
+  }
+  function startQuiz(ids) {
+    if (!ids.length) { toast('조건에 맞는 문제가 없습니다'); return; }
+    const seed = Math.floor(Math.random() * 100000);
+    let order = shuffleSeed(ids, seed);
+    const n = S.ui.qz.n; if (n && ids.length > 1) order = order.slice(0, n);
+    S.qs = { ids: order, pos: 0, picks: {}, seed };
+    go('quiz');
+  }
+  function qOrder(it) {
+    const idx = it.opts.map((_, k) => k);
+    return it.ox ? idx : shuffleSeed(idx, (S.qs ? S.qs.seed : 1) + it.id.length * 31 + (+it.id.slice(2)) * 7);
+  }
+  function qPick(k) {
+    const qs = S.qs; if (!qs) return; const id = qs.ids[qs.pos]; if (!id || qs.picks[id] != null) return;
+    const it = qItem(id); qs.picks[id] = k; const ok = k === it.ans; S.quizQ[id] = ok; tally(ok);
+    if (ok) resolveWrong('Q:' + id); else markWrong('Q:' + id, { why: '정답: ' + it.opts[it.ans] });
+    render();
+  }
+  function vQuiz() {
+    const z = S.ui.qz; const qs = S.qs;
+    const acc = f => { const ids = QIDS.filter(id => id[0] === f && S.quizQ[id] != null); return `${ids.filter(id => S.quizQ[id]).length}/${ids.length}`; };
+    const head = `<div class="section-h" style="margin-top:0"><h2>이지선다 · 사지선다 퀴즈</h2>
+      <span class="row"><span class="chip">이지선다 ${window.QUIZ2.length}문항 · 맞힘 ${acc('2')}</span><span class="chip">사지선다 ${window.QUIZ4.length}문항 · 맞힘 ${acc('4')}</span></span></div>`;
+    if (!qs) {
+      const seg = (k, list) => `<div class="row">${list.map(([v, l]) => `<button class="choice ${String(z[k]) === String(v) ? 'sel' : ''}" data-act="qSet" data-k="${k}" data-v="${v}">${l}</button>`).join('')}</div>`;
+      const nWrong = QIDS.filter(id => S.wrong['Q:' + id] && !S.wrong['Q:' + id].resolved).length;
+      const pool = qPool();
+      return head + `<div class="grid2"><div class="panel pad stack">
+        <b>형식</b>${seg('fmt', [['mix', '혼합'], ['2', '이지선다 (O/X·양자택일)'], ['4', '사지선다']])}
+        <b>범위</b>${seg('scope', [['all', '전체'], ['wrong', '틀린 문제만 (' + nWrong + ')'], ['ALL', '공통 (p-value 등)']].concat(TPL.map(t => [t.id, t.id + ' ' + t.name])))}
+        <b>문항 수</b>${seg('n', [[10, '10문항'], [20, '20문항'], [0, '전부']])}
+        <div class="row"><button class="btn pri" data-act="qStart" ${pool.length ? '' : 'disabled'}>퀴즈 시작 · ${S.ui.qz.n ? Math.min(S.ui.qz.n, pool.length) : pool.length}문항</button><span class="muted small">조건에 맞는 문제 ${pool.length}개</span></div>
+      </div><div class="panel pad stack"><b>푸는 방법</b>
+        <p style="margin:0">보기를 누르면 바로 채점되고 해설이 나옵니다. 키보드로는 숫자 1~4(이지선다는 1=O, 2=X)로 고르고 Enter로 다음 문제로 넘어갑니다.</p>
+        <p style="margin:0">틀린 문제는 오답노트에 쌓이고, 범위에서 <b>틀린 문제만</b>을 골라 다시 풀 수 있습니다. 결과는 누적 정답률에 반영됩니다.</p>
+      </div></div>`;
+    }
+    const N = qs.ids.length; const okN = qs.ids.filter(id => qs.picks[id] != null && qs.picks[id] === qItem(id).ans).length;
+    if (qs.pos >= N) {
+      const wrongIds = qs.ids.filter(id => qs.picks[id] !== qItem(id).ans);
+      return head + `<div class="panel pad stack">
+        <div class="score-line"><div><span class="label">결과</span><div class="bigscore">${okN}<span class="muted small"> / ${N} · ${pct(okN, N)}%</span></div></div>
+          <div class="row">${wrongIds.length ? '<button class="btn pri" data-act="qWrongAgain">틀린 ' + wrongIds.length + '문항 다시</button>' : ''}<button class="btn" data-act="qStart">같은 조건으로 새 퀴즈</button><button class="btn ghost" data-act="qQuit">설정으로</button></div></div>
+        ${wrongIds.length ? `<div class="wlist">${wrongIds.map(id => { const it = qItem(id); return `<div class="witem"><div style="min-width:0"><div class="t"><b>${esc(it.q)}</b></div>
+          <div class="small" style="color:var(--bad)">내 답: ${esc(qs.picks[id] != null ? it.opts[qs.picks[id]] : '(안 품)')}</div><div class="small" style="color:var(--ok)">정답: ${esc(it.opts[it.ans])} — ${esc(it.exp)}</div></div><span class="chip">${it.tpl === 'ALL' ? '공통' : it.tpl}</span></div>`; }).join('')}</div>` : '<div class="fb ok">전부 맞혔습니다.</div>'}
+      </div>`;
+    }
+    const it = qItem(qs.ids[qs.pos]); const pick = qs.picks[it.id]; const answered = pick != null;
+    const order = qOrder(it);
+    return head + `<div class="panel pad stack" style="max-width:820px">
+      <div class="row" style="justify-content:space-between"><span class="label">문제 ${qs.pos + 1} / ${N} · 맞힘 ${okN}</span>
+        <span class="row"><span class="chip acc">${it.fmt === 2 ? '이지선다' : '사지선다'}</span><span class="chip">${it.tpl === 'ALL' ? '공통' : esc(it.tpl + ' ' + TMAP[it.tpl].name)}</span><button class="btn sm ghost" data-act="qQuit">그만두기</button></span></div>
+      <div class="bar"><i style="width:${pct(qs.pos, N)}%"></i></div>
+      <p class="story" style="margin:0;font-weight:500">${esc(it.q)}</p>
+      <div class="opts" ${it.ox ? 'style="grid-template-columns:1fr 1fr"' : ''}>${order.map((k, j) => { let c = ''; if (answered) { if (k === it.ans) c = 'ok'; else if (k === pick) c = 'bad'; }
+        return `<button class="opt ${c}" data-act="qPick" data-v="${k}" ${answered ? 'disabled' : ''} ${it.ox ? 'style="text-align:center;font-size:20px;font-weight:600;padding:14px"' : ''}>${it.ox ? '' : `<b class="mono">${j + 1}.</b> `}${esc(it.opts[k])}</button>`; }).join('')}</div>
+      ${answered ? `<div class="fb ${pick === it.ans ? 'ok' : 'bad'}">${pick === it.ans ? '정답입니다.' : '오답입니다. 정답: ' + esc(it.opts[it.ans])}<br>${esc(it.exp)}</div>
+        <div class="row"><button class="btn pri" data-act="qNext" id="qNextBtn">${qs.pos + 1 < N ? '다음 문제' : '결과 보기'}</button></div>` : ''}
+    </div>`;
   }
 
   // ---------------------------------------------------------------- grading (practice)
@@ -722,6 +798,11 @@
       const p = byTpl(S.ui.tpl)[S.ui.pi || 0]; if (p) { S.drafts[p.id] = el.value; save(); }
     }
     if (e.key === 'Escape' && $('#modal').innerHTML) { $('#modal').innerHTML = ''; }
+    if (S.ui.view === 'quiz' && S.qs && S.qs.pos < S.qs.ids.length && !/INPUT|TEXTAREA/.test(el.tagName || '')) {
+      const it = qItem(S.qs.ids[S.qs.pos]); const answered = S.qs.picks[it.id] != null;
+      if (!answered && /^[1-4]$/.test(e.key) && +e.key <= it.opts.length) { qPick(qOrder(it)[+e.key - 1]); }
+      else if (answered && e.key === 'Enter') { e.preventDefault(); S.qs.pos++; render(); }
+    }
   });
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-act]');
@@ -750,6 +831,7 @@
       case 'mode':
         if (d.v === 'F') { go('mock'); break; }
         if (d.v === 'G') { startRetry(); break; }
+        if (d.v === 'Q') { S.ui.qz.scope = S.ui.tpl; S.qs = null; go('quiz'); break; }
         S.ui.mode = d.v; render(); break;
       case 'pi': S.ui.pi = +d.v; T.showSol = null; render(); break;
       case 'toggleList': T.listOpen = !T.listOpen; render(); break;
@@ -803,6 +885,14 @@
       case 'retryAll': startRetry(); break;
       case 'retryNext': { const r = S.ui.retry; if (!r) break; r.pos = (r.pos + 1) % r.queue.length; openSub(r.queue[r.pos], true); break; }
       case 'retryStop': S.ui.retry = null; render(); break;
+      // Q (이지선다/사지선다)
+      case 'qSet': S.ui.qz[d.k] = d.k === 'n' ? +d.v : d.v; render(); break;
+      case 'qStart': startQuiz(qPool()); break;
+      case 'qPick': qPick(+d.v); break;
+      case 'qNext': if (S.qs) { S.qs.pos++; render(); } break;
+      case 'qWrongAgain': startQuiz(S.qs.ids.filter(id => S.qs.picks[id] !== qItem(id).ans)); break;
+      case 'qQuit': S.qs = null; render(); break;
+      case 'qRetryOne': startQuiz([d.v]); break;
       // F
       case 'mockStart': newMock(); Object.keys(T.inputs).filter(k => k[0] === 'M').forEach(k => delete T.inputs[k]); Object.keys(T.choice).filter(k => k[0] === 'M').forEach(k => delete T.choice[k]); go('mock'); break;
       case 'mockAbort': case 'mockClose': S.mock = null; render(); break;
@@ -840,11 +930,11 @@
   }
   setInterval(() => { const el = document.getElementById('timer'); if (el && S.mock && !S.mock.submitted) { const s = Math.floor((Date.now() - S.mock.started) / 1000); el.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} / 권장 30:00`; } }, 1000);
   window.addEventListener('resize', afterRender);
-  window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (h && h !== S.ui.view && ['home', 'study', 'plan', 'mock', 'wrong', 'project'].includes(h)) { S.ui.view = h; render(); } });
+  window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (h && h !== S.ui.view && VIEWS.includes(h)) { S.ui.view = h; render(); } });
 
   // boot
   const h = location.hash.slice(1);
-  if (['home', 'study', 'plan', 'mock', 'wrong', 'project'].includes(h)) S.ui.view = h;
+  if (VIEWS.includes(h)) S.ui.view = h;
   render();
   // self-check hooks for tests
   window.__bbk = { normCode, codeOk, funcOk, gradeValue, SUBMAP };
